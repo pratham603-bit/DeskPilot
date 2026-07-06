@@ -1,61 +1,173 @@
-# DeskPilot — A Personal Productivity Agent
+# 🚀 DeskPilot
 
-DeskPilot is a personal productivity agent that manages tasks, schedules, and documents through natural language. Powered by Gemini function calling with persistent memory of user preferences, it collapses disconnected tools (to-do lists, calendars, and notes) into a single conversational interface.
+**DeskPilot** is an AI-powered personal productivity agent that manages your tasks, schedule, and documents through natural language — powered by **Gemini 2.5 Flash** function calling, with persistent memory of your preferences.
 
-## Architecture
+> Chat with your productivity stack instead of clicking through it.
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 📝 **Task Management** | Add, list, and complete tasks with priorities and due dates |
+| 📅 **Smart Scheduling** | Schedule events and automatically detect conflicts |
+| 🧠 **Persistent Memory** | Remembers your preferences across sessions (e.g., "no meetings before 10am") |
+| 📄 **Document Summaries** | Paste a document and get a Gemini-powered summary with action items |
+| 🌅 **Daily Briefing** | Get a morning overview of pending tasks and today's events |
+| 🌐 **Web UI + CLI** | Choose between a beautiful browser chat interface or a fast terminal CLI |
+| 🔒 **Audit Logging** | Every tool call is logged to `data/audit.log` for full traceability |
+
+---
+
+## 🏗️ Architecture
 
 ```
-User (CLI or Flask API)
+User (Browser / Terminal)
         │
         ▼
-    agent.py  ── Gemini function‑calling loop, persona + system instruction (uses gemini‑2.5‑flash)
+    agent.py  ──── Gemini 2.5 Flash function-calling loop
         │
         ▼
-    tools.py  ── add_task, list_tasks, complete_task, schedule_event,
-                 check_conflicts, summarize_document, daily_briefing,
-                 remember_preference
-        │              │
-        ▼              ▼
-  SQLite (tasks.db)   memory.py → preferences.json
+    tools.py  ──── add_task · list_tasks · complete_task
+                   schedule_event · check_conflicts
+                   summarize_document · daily_briefing
+                   remember_preference
+        │                   │
+        ▼                   ▼
+  data/tasks.db        data/preferences.json
+  (SQLite)             (via memory.py)
         │
         ▼
-   audit.log (every tool call logged for traceability)
+  data/audit.log  ──── append-only tool call ledger
         │
         ▼
-   Flask API (api.py) – serves web UI and JSON endpoints
+  api.py  ──────────── Flask server → templates/index.html
 ```
 
-## Features
-- **Task Management**: Add, list, and complete tasks with priority and due dates.
-- **Calendar & Scheduling**: Schedule events, check for overlapping conflicts, and get daily briefings.
-- **Persistent Memory**: Remembers your preferences across sessions (e.g., "always summarize concisely").
-- **Web Interface & CLI**: Comes with both a beautiful browser-based chat UI and a fast terminal CLI.
-- **Audit Logging**: Every action taken by the LLM is logged for complete traceability.
+---
 
-## Setup Instructions
-1. Clone the repository.
-2. Initialize a virtual environment and install dependencies:
-   ```bash
-   python -m venv venv
-   .\venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-3. Copy `.env.example` to `.env` and add your `GEMINI_API_KEY`.
-4. Run the Web UI:
-   ```bash
-   .\run_web.bat
-   ```
-   Or run the Terminal CLI:
-   ```bash
-   .\run.bat
-   ```
+## 🖥️ Screenshots
 
-## Course Concepts Applied (5-Day AI Agents Intensive)
-- **Tool Integration:** Tools are fully integrated into `tools.py` with rigorous validation and error handling as per best practices.
-- **Agent Skills & Memory:** Implemented in `memory.py` and documented in `.agent/skills/productivity-assistant/SKILL.md`. DeskPilot remembers preferences across sessions.
-- **Security & STRIDE:** We implemented a `THREAT_MODEL.md` that addresses prompt injection, DOS, and Information Disclosure risks. All tool executions are securely logged in `data/audit.log`.
-- **Testing:** Comprehensive `pytest` suite ensuring correct task management and conflict resolution.
+### Web Interface
+> Start the web server and open `http://localhost:5000` in your browser.
+> DeskPilot greets you with your daily briefing automatically.
 
-## Limitations & Future Work
-- **Local-only for now.** `api.py` serves the Flask UI locally; next steps include deploying to Cloud Run.
-- **No external calendar integration.** Events are stored in SQLite; future work could sync with Google Calendar via the Calendar API.
+### Terminal CLI
+```
+$ .\run.bat
+
+Loading daily briefing...
+
+You: Add a task: finish capstone report, due 2026-07-07, high priority
+DeskPilot: Added "finish capstone report" (priority: high, due: 2026-07-07) to your task list.
+
+You: What's on my schedule today?
+DeskPilot: You have no events scheduled today.
+
+You: Give me my daily briefing
+DeskPilot: You have 1 open task — "finish capstone report" (high, due tomorrow) — and no events today.
+```
+
+---
+
+## ⚙️ Setup
+
+### Prerequisites
+- Python 3.10+
+- A [Gemini API key](https://aistudio.google.com/app/apikey) (free tier works)
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR-USERNAME/DeskPilot.git
+cd DeskPilot
+
+# 2. Create and activate a virtual environment
+python -m venv venv
+.\venv\Scripts\activate        # Windows
+# source venv/bin/activate     # macOS/Linux
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure your API key
+copy .env.example .env
+# Then edit .env and set: GEMINI_API_KEY=your_key_here
+```
+
+### Running
+
+**Web Interface (recommended):**
+```bash
+.\run_web.bat
+# Then open http://localhost:5000 in your browser
+```
+
+**Terminal CLI:**
+```bash
+.\run.bat
+```
+
+---
+
+## 🧪 Tests
+
+The project includes a full `pytest` suite with 17 tests covering normal and edge cases across every tool function (malformed dates, duplicate completions, overlapping event detection, etc.).
+
+```bash
+.\venv\Scripts\activate
+pytest tests/ -v
+```
+
+---
+
+## 📁 Project Structure
+
+```
+DeskPilot/
+├── agent.py              # Gemini chat loop & system prompt
+├── tools.py              # All tool functions (tasks, events, memory, docs)
+├── memory.py             # Persistent preferences via JSON
+├── api.py                # Flask API server
+├── cli.py                # Terminal chat interface
+├── templates/
+│   └── index.html        # Web chat UI
+├── data/
+│   ├── .gitkeep
+│   ├── tasks.db          # SQLite database (runtime, not committed)
+│   ├── preferences.json  # User preferences (runtime, not committed)
+│   └── audit.log         # Tool call log (runtime, not committed)
+├── tests/
+│   └── test_tools.py     # pytest suite
+├── THREAT_MODEL.md       # STRIDE security analysis
+├── run.bat               # Launch CLI (Windows)
+└── run_web.bat           # Launch Web UI (Windows)
+```
+
+---
+
+## 🔐 Security
+
+A full STRIDE threat model is documented in [`THREAT_MODEL.md`](./THREAT_MODEL.md), covering:
+- Prompt injection mitigations
+- Input validation on every tool function
+- Append-only audit logging for accountability
+- `.env`-based secret management (never committed)
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Deploy to Cloud Run for public access
+- [ ] Google Calendar sync via the Calendar API
+- [ ] Multi-user support with auth layer
+- [ ] Recurring events support
+- [ ] Voice input via the Web Speech API
+
+---
+
+## 📄 License
+
+MIT — see [LICENSE](./LICENSE) for details.
