@@ -1,0 +1,4 @@
+Add a task: finish capstone report, due tomorrow, high priority
+What's on my schedule today?
+Give me my daily briefing
+exit

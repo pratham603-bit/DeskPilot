@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeskPilot Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #0f172a;
+            --chat-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --bot-bubble: #334155;
+            --user-bubble: #6366f1;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color), #000000);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background-color: var(--chat-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header {
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-header span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease-in-out;
+            word-wrap: break-word;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.bot {
+            background-color: var(--bot-bubble);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user {
+            background-color: var(--user-bubble);
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .chat-input-area {
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button {
+            padding: 0 30px;
+            border-radius: 30px;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* Loading indicator */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: var(--bot-bubble);
+            padding: 15px 20px;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>DeskPilot</h1>
+        <span>Your AI Productivity Agent</span>
+    </div>
+    
+    <div class="chat-messages" id="chat-messages">
+        <!-- Messages will be injected here -->
+    </div>
+    
+    <div class="typing-indicator" id="typing-indicator">
+        <span></span><span></span><span></span>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="user-input" placeholder="Ask DeskPilot to schedule an event or list tasks..." autocomplete="off" onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    const messagesContainer = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const typingIndicator = document.getElementById('typing-indicator');
+    
+    let chatHistory = [];
+
+    // Format text to handle basic markdown (newlines)
+    function formatText(text) {
+        return text.replace(/\n/g, '<br>');
+    }
+
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender);
+        messageDiv.innerHTML = formatText(text);
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function showTyping() {
+        typingIndicator.style.display = 'block';
+        messagesContainer.appendChild(typingIndicator);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function hideTyping() {
+        typingIndicator.style.display = 'none';
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        userInput.value = '';
+        showTyping();
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: text,
+                    history: chatHistory
+                })
+            });
+
+            const data = await response.json();
+            hideTyping();
+
+            if (data.error) {
+                addMessage(`Error: ${data.error}`, 'bot');
+            } else {
+                addMessage(data.response, 'bot');
+                // Update history
+                chatHistory.push({ role: "user", parts: [text] });
+                chatHistory.push({ role: "model", parts: [data.response] });
+            }
+        } catch (error) {
+            hideTyping();
+            addMessage(`Connection error: ${error.message}`, 'bot');
+        }
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // Initial silent call to get the daily briefing automatically
+    window.onload = async () => {
+        showTyping();
+        const hiddenPrompt = "The user just opened the web app. Call the daily_briefing tool and then greet the user with a 1-2 sentence summary of their day exactly like 'Good morning! Here's your briefing: you have X tasks and Y events scheduled for today. Let me know what you'd like to add.'";
+        
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: hiddenPrompt, history: chatHistory })
+            });
+            const data = await response.json();
+            hideTyping();
+            if (!data.error) {
+                addMessage(data.response, 'bot');
+                chatHistory.push({ role: "user", parts: [hiddenPrompt] });
+                chatHistory.push({ role: "model", parts: [data.response] });
+            }
+        } catch (error) {
+            hideTyping();
+            addMessage("Welcome to DeskPilot! How can I help you today?", 'bot');
+        }
+    };
+</script>
+
+</body>
+</html>
